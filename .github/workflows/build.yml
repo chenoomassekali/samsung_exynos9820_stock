@@ -21,23 +21,26 @@ jobs:
           mv KernelSU/kernel drivers/kernelsu
           rm -rf KernelSU
 
-      - name: Configure NetHunter
+      - name: Configure and build
         run: |
           cd kali-nethunter-kernel
+          
+          # 创建 local.config 覆盖默认设定
           cat > local.config << 'EOF'
           ARCH=arm64
           SUBARCH=arm64
           KDIR=${{ github.workspace }}
+          CONFIG=exynos9820-d2s_defconfig
           DEVICE=d2s
-          DEFCONFIG=exynos9820-d2s_defconfig
-          TOOLCHAIN=clang
           NH_VERSION=2025.3
+          CC=clang
           EOF
+          
+          # 复制您的 defconfig 为 nethunter_defconfig (避免交互式选择)
+          cp ${KDIR}/arch/arm64/configs/${CONFIG} ${KDIR}/arch/arm64/configs/nethunter_defconfig
 
-      - name: Build Kernel
-        run: |
-          cd kali-nethunter-kernel
-          echo "2" | bash build.sh
+          # 非交互式运行：选 2 (编译) 然后 N (不编辑配置)
+          { echo "2"; echo "N"; } | bash build.sh
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
