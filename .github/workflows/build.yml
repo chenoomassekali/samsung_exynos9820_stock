@@ -13,6 +13,14 @@ jobs:
       - name: Clone NetHunter builder
         run: git clone https://github.com/ravindu644/kali-nethunter-kernel.git
 
+      - name: Clone and integrate KernelSU
+        run: |
+          cd ${{ github.workspace }}
+          rm -rf KernelSU drivers/kernelsu
+          git clone https://github.com/tiann/KernelSU.git
+          mv KernelSU/kernel drivers/kernelsu
+          rm -rf KernelSU
+
       - name: Configure NetHunter
         run: |
           cd kali-nethunter-kernel
@@ -29,7 +37,6 @@ jobs:
       - name: Build Kernel
         run: |
           cd kali-nethunter-kernel
-          # Secara otomatis memilih opsi 2 (Configure & compile kernel from scratch)
           echo "2" | bash build.sh
 
       - name: Upload artifact
