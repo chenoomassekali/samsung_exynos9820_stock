@@ -21,11 +21,24 @@ jobs:
           mv KernelSU/kernel drivers/kernelsu
           rm -rf KernelSU
 
+      - name: Prepare defconfig for NetHunter
+        run: |
+          # Simpan path root kernel di variabel
+          KROOT=${{ github.workspace }}
+          echo "Kernel root is: $KROOT"
+          
+          # Salin defconfig bawaan d2s menjadi nethunter_defconfig
+          cp ${KROOT}/arch/arm64/configs/exynos9820-d2s_defconfig ${KROOT}/arch/arm64/configs/nethunter_defconfig
+          echo "Copied defconfig to nethunter_defconfig"
+
       - name: Configure and build
         run: |
+          KROOT=${{ github.workspace }}
+          export TERM=xterm
+          
           cd kali-nethunter-kernel
           
-          # 创建 local.config 覆盖默认设定
+          # Buat local.config untuk menimpa pengaturan default builder
           cat > local.config << 'EOF'
           ARCH=arm64
           SUBARCH=arm64
@@ -36,10 +49,8 @@ jobs:
           CC=clang
           EOF
           
-          # 复制您的 defconfig 为 nethunter_defconfig (避免交互式选择)
-          cp ${KDIR}/arch/arm64/configs/${CONFIG} ${KDIR}/arch/arm64/configs/nethunter_defconfig
-
-          # 非交互式运行：选 2 (编译) 然后 N (不编辑配置)
+          echo "Starting non-interactive build..."
+          # Kirim pilihan 2 (Configure & compile) lalu jawab "N" untuk "Edit config?"
           { echo "2"; echo "N"; } | bash build.sh
 
       - name: Upload artifact
