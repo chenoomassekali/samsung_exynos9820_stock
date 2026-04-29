@@ -26,11 +26,11 @@ jobs:
           NH_VERSION=2025.3
           EOF
 
-      - - name: Build Kernel
-  run: |
-    cd kali-nethunter-kernel
-    # Secara otomatis memilih opsi 2 (Configure & compile kernel from scratch)
-    echo "2" | bash build.sh
+      - name: Build Kernel
+        run: |
+          cd kali-nethunter-kernel
+          # Secara otomatis memilih opsi 2 (Configure & compile kernel from scratch)
+          echo "2" | bash build.sh
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
