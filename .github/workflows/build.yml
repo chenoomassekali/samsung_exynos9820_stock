@@ -1,67 +1,38 @@
-name: build and release
+name: Build NetHunter Kernel for d2s
 
 on:
   workflow_dispatch:
-    inputs:      
-      tag:
-        description: 'Release Tag'
-        required: true        
 
 jobs:
   build:
     runs-on: ubuntu-22.04
-    permissions:
-      contents: write
-    strategy:
-      matrix:
-        device: [beyond2, beyond1, beyond0, beyondxks, d1, d2s, d1x, d2x]
-
     steps:
-      - name: Checkout source
+      - name: Checkout kernel source
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
 
-      - name: Set up build environment
-        run: |
-          sudo apt update -y  
-          sudo apt install libncurses5-dev -y
-          wget http://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2ubuntu0.1_amd64.deb && sudo dpkg -i libtinfo5_6.3-2ubuntu0.1_amd64.deb         
-          
-      - name: Set environment variable
-        run: |
-          echo "BUILD_KERNEL_VERSION=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
-          
-      - name: Building Kernel
-        run: |
-            bash build.sh ${{ matrix.device }}
+      - name: Clone NetHunter builder
+        run: git clone https://github.com/ravindu644/kali-nethunter-kernel.git
 
-      - name: Upload kernel
+      - name: Configure NetHunter
+        run: |
+          cd kali-nethunter-kernel
+          cat > local.config << 'EOF'
+          ARCH=arm64
+          SUBARCH=arm64
+          KDIR=${{ github.workspace }}
+          DEVICE=d2s
+          DEFCONFIG=exynos9820-d2s_defconfig
+          TOOLCHAIN=clang
+          NH_VERSION=2025.3
+          EOF
+
+      - name: Build Kernel
+        run: |
+          cd kali-nethunter-kernel
+          bash build.sh
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: "KernelSU-Next-${{ env.BUILD_KERNEL_VERSION }}-${{ matrix.device }}-stock-One-UI"
-          path: |
-            build/*.tar
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-
-      - name: Create release
-        uses: ncipollo/release-action@v1
-        with:
-          tag: ${{ github.event.inputs.tag }}
-          name: "KernelSU-Next-beyond-stock-One-UI-${{ github.event.inputs.tag }}"
-          draft: false
-          prerelease: false
-          token: ${{ secrets.GITHUB_TOKEN }}          
-          artifacts: "artifacts/**/*.tar"
-          body: "Commit SHA: ${{ github.sha }}"
+          name: Nethunter-d2s-OneUI4.1-boot
+          path: kali-nethunter-kernel/output/*.img
