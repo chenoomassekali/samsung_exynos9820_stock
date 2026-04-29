@@ -23,35 +23,30 @@ jobs:
 
       - name: Prepare defconfig for NetHunter
         run: |
-          # Simpan path root kernel di variabel
           KROOT=${{ github.workspace }}
-          echo "Kernel root is: $KROOT"
-          
-          # Salin defconfig bawaan d2s menjadi nethunter_defconfig
-          cp ${KROOT}/arch/arm64/configs/exynos9820-d2s_defconfig ${KROOT}/arch/arm64/configs/nethunter_defconfig
-          echo "Copied defconfig to nethunter_defconfig"
+          # Salin defconfig d2s yang benar (exynos9825-d2s) menjadi nethunter_defconfig
+          cp ${KROOT}/arch/arm64/configs/exynos9825-d2s_defconfig ${KROOT}/arch/arm64/configs/nethunter_defconfig
 
       - name: Configure and build
         run: |
-          KROOT=${{ github.workspace }}
           export TERM=xterm
+          export ANDROID_MAJOR_VERSION=12  # One UI 4.1 = Android 12
           
           cd kali-nethunter-kernel
           
-          # Buat local.config untuk menimpa pengaturan default builder
+          # Override semua konfigurasi builder via local.config
           cat > local.config << 'EOF'
           ARCH=arm64
           SUBARCH=arm64
           KDIR=${{ github.workspace }}
-          CONFIG=exynos9820-d2s_defconfig
+          CONFIG=exynos9825-d2s_defconfig
           DEVICE=d2s
           NH_VERSION=2025.3
           CC=clang
           EOF
           
-          echo "Starting non-interactive build..."
-          # Kirim pilihan 2 (Configure & compile) lalu jawab "N" untuk "Edit config?"
-          { echo "2"; echo "N"; } | bash build.sh
+          # Jalankan build secara non-interaktif: pilih mode 2 (kompilasi penuh) dan tolak edit config
+          echo -e "2\nN" | bash build.sh
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
